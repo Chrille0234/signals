@@ -8,6 +8,3 @@ function increment(){
 
 // @ts-ignore
 document.querySelector("button").addEventListener("click", () => {increment()})
-
-
-let message = new Signal("Hello world", "message")

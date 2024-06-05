@@ -1,3 +1,22 @@
+let allNodesWithSignals = function(){
+    let allElementOnPage = document.querySelector("body")?.children
+
+    let elements = []
+
+    if(!allElementOnPage) {
+        return []
+    }
+    Array.from(allElementOnPage).forEach(el => {
+        let regex = /\|([^\s|]+)\|/g;
+
+        if (el.textContent?.match(regex)) {
+            elements.push(el)
+        } 
+    });
+
+    return elements
+}()
+
 export class Signal {
     /** 
      *  @param {any} value value can be anything
@@ -12,7 +31,7 @@ export class Signal {
         this.variablename = variablename;
 
         // used for searching through your entire DOM tree for |variablename|
-        let allElementOnPage = document.querySelector("body")?.children;
+        let allElementOnPage = allNodesWithSignals
 
         if(!allElementOnPage) {
             console.log("Using signals require a body.")
@@ -32,7 +51,9 @@ export class Signal {
             let newInnerText = oldInnerTextSplitted.map(text => text === this.variablename ? `<span class="${this.variablename}">${this._value}</span>` : text).join("");
             el.innerHTML = newInnerText;
 
-            this._nodesArr.push(el.querySelector("." + this.variablename));
+            let allElements = el.querySelectorAll("." + this.variablename)
+
+            allElements.forEach(el => this._nodesArr.push(el))
         });
     }
 
