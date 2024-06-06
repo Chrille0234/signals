@@ -30,15 +30,7 @@ export class Signal {
         /** @type {string} */
         this.variablename = variablename;
 
-        // used for searching through your entire DOM tree for |variablename|
-        let allElementOnPage = allNodesWithSignals
-
-        if(!allElementOnPage) {
-            console.log("Using signals require a body.")
-            return
-        }
-
-        Array.from(allElementOnPage).forEach(el => {
+        Array.from(allNodesWithSignals).forEach(el => {
             if (!el.textContent?.includes("|" + this.variablename + "|")) {
                 return;
             }
