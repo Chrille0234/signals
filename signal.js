@@ -1,3 +1,4 @@
+// Check which elements contain 2 pipes. This is to avoid scanning the entire document everytime you create a new signal instance
 let allNodesWithSignals = function(){
     let allElementOnPage = document.querySelector("body")?.children
 
