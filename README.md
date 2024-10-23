@@ -19,10 +19,4 @@ Update the Value
     aSignal.value = "new value";
 
 You can change the value at any time using the value property.
-Note: The datatype of the value cannot be changed once set.
-
-# To Do
-
-* Future Improvements: There are plans for a rewritten version that avoids creating span elements. Only god knows when that'll be.
-
-* Let the user opt into being allowed to change the datatype of the value
+Note: The type of the value (string, number...) cannot be changed once set.
