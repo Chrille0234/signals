@@ -1,6 +1,6 @@
 // Check which elements contain 2 pipes. This is to avoid scanning the entire document everytime you create a new signal instance
 let allNodesWithSignals = function(){
-    let allElementOnPage = document.querySelector("body")?.children
+    let allElementOnPage = document.body?.children
 
     let elements = []
 
@@ -18,15 +18,45 @@ let allNodesWithSignals = function(){
     return elements
 }()
 
+function splitAndKeepDelimiterInterleaved(str, delimiter) {
+    if (typeof str !== 'string' || typeof delimiter !== 'string' || delimiter === '') {
+      return []; // Handle invalid input
+    }
+  
+    const result = [];
+    let currentIndex = 0;
+    let delimiterIndex;
+  
+    while ((delimiterIndex = str.indexOf(delimiter, currentIndex)) !== -1) {
+      if (currentIndex < delimiterIndex) {
+        result.push(str.slice(currentIndex, delimiterIndex));
+      }
+      result.push(delimiter);
+      currentIndex = delimiterIndex + delimiter.length;
+    }
+  
+    if (currentIndex < str.length) {
+      result.push(str.slice(currentIndex));
+    }
+  
+    //Remove trailing delimiter if there is one.
+    if(result.length > 0 && result[result.length -1] === delimiter){
+        result.pop();
+    }
+  
+    return result;
+  }
+
 export class Signal {
     /** 
-     *  @param {any} value value can be anything
+     * @template T
+     *  @param {T} value value can be anything
      *  @param {string}  variablename This is what you will be writing in your html, surrounded by pipes ("|")
     */
     constructor(value, variablename) {
-        /** @type {any} */
+        /** @type {T} */
         this._value = value;
-        /** @type {Array} stores all elements that use the value */
+        /** @type {Array} stores all text nodes that use the value */
         this._nodesArr = [];
         /** @type {string} */
         this.variablename = variablename;
@@ -36,23 +66,25 @@ export class Signal {
                 return;
             }
 
-            /** @type {string[]} */
-            let oldInnerTextSplitted = el.textContent.split("|");
-
-            // Replace |variablename| with <span class="variablename">value</span>
-            // The span is needed because i need a proper way to replace the variable without the pipes, as they will no longer be there.
-            let newInnerText = oldInnerTextSplitted.map(text => text === this.variablename ? `<span class="${this.variablename}">${this._value}</span>` : text).join("");
-            el.innerHTML = newInnerText;
-
-            let allElements = el.querySelectorAll("." + this.variablename)
-
-            allElements.forEach(el => this._nodesArr.push(el))
+            let regex = new RegExp(`\\|${this.variablename}\\|`, 'g');
+            let matches;
+            while ((matches = regex.exec(el.textContent)) !== null) {
+                let textNode = document.createTextNode(this._value);
+                let start = matches.index;
+                let end = start + matches[0].length;
+                let before = el.textContent.slice(0, start);
+                let after = el.textContent.slice(end);
+                el.textContent = before;
+                el.appendChild(textNode);
+                el.appendChild(document.createTextNode(after));
+                this._nodesArr.push(textNode);
+            }
         });
     }
 
     _updateNodes() {
-        this._nodesArr.forEach(el => {
-            el.innerText = this._value
+        this._nodesArr.forEach(node => {
+            node.nodeValue = this._value;
         });
     }
 
