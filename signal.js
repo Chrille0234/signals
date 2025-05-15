@@ -1,74 +1,135 @@
-// Check which elements contain 2 pipes. This is to avoid scanning the entire document everytime you create a new signal instance
-let allNodesWithSignals = function(){
-    let allElementOnPage = document.body?.children
-
-    let elements = []
-
-    if(!allElementOnPage) {
-        return []
-    }
-    Array.from(allElementOnPage).forEach(el => {
-        let regex = /\|([^\s|]+)\|/g;
-
-        if (el.textContent?.match(regex)) {
-            elements.push(el)
-        } 
-    });
-
-    return elements
-}()
-
-export class Signal {
-    /** 
-     * @template T
-     *  @param {T} value value can be anything
-     *  @param {string}  variablename This is what you will be writing in your html, surrounded by pipes ("|")
-    */
-    constructor(value, variablename) {
-        /** @type {T} */
-        this._value = value;
-        /** @type {Array} stores all text nodes that use the value */
-        this._nodesArr = [];
-        /** @type {string} */
-        this.variablename = variablename;
-
-        Array.from(allNodesWithSignals).forEach(el => {
-            if (!el.textContent?.includes("|" + this.variablename + "|")) {
-                return;
+let allNodesWithSignals = (function(){
+    const elements = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT, {
+        acceptNode: function(node) {
+            if (node.textContent?.match(/\|([^\s|]+)\|/g)) {
+                return NodeFilter.FILTER_ACCEPT;
             }
-
-            let regex = new RegExp(`\\|${this.variablename}\\|`, 'g');
-            let matches;
-            while ((matches = regex.exec(el.textContent)) !== null) {
-                let textNode = document.createTextNode(this._value);
-                let start = matches.index;
-                let end = start + matches[0].length;
-                let before = el.textContent.slice(0, start);
-                let after = el.textContent.slice(end);
-                el.textContent = before;
-                el.appendChild(textNode);
-                el.appendChild(document.createTextNode(after));
-                this._nodesArr.push(textNode);
-            }
-        });
-    }
-
-    _updateNodes() {
-        this._nodesArr.forEach(node => {
-            node.nodeValue = this._value;
-        });
-    }
-
-    set value(newValue) {
-        if(typeof this._value !== typeof newValue) {
-            console.log("changing the data type is not allowed")
-            return 
+            return NodeFilter.FILTER_REJECT;
         }
-        this._value = newValue;
-        this._updateNodes();
+    });
+    while(walker.nextNode()) elements.push(walker.currentNode);
+    return elements;
+})();
+
+export function initialiseSignal(markupName, value) {
+  const signalValueNodes = [];
+
+  const placeholder = `|${markupName}|`;
+
+  function processNode(node) {
+    if (!node) {
+      return;
     }
 
-    get value() {
-        return this._value;
+    if (node.nodeType === Node.TEXT_NODE) {
+      handleTextNodeReplacement(node, placeholder, value, signalValueNodes);
     }
+    else if (node.nodeType === Node.ELEMENT_NODE) {
+      Array.from(node.childNodes).forEach(child => processNode(child));
+    }
+  }
+
+  function handleTextNodeReplacement(textNode, placeholder, value, collectedSignalNodes) {
+    if (!textNode.isConnected) {
+      return;
+    }
+
+    const textContent = textNode.nodeValue;
+
+    if (!textContent || !textContent.includes(placeholder)) {
+      return;
+    }
+
+    const parent = textNode.parentNode;
+    if (!parent) {
+      return;
+    }
+
+    const parts = textContent.split(placeholder);
+
+    if (parts.length <= 1) {
+      return;
+    }
+
+    textNode.nodeValue = parts[0];
+
+    let nodeAfterInsertionPoint = textNode;
+
+    for (let i = 1; i < parts.length; i++) {
+      const signalTextNode = document.createTextNode(String(value ?? ''));
+
+      collectedSignalNodes.push(signalTextNode);
+      parent.insertBefore(signalTextNode, nodeAfterInsertionPoint.nextSibling);
+
+      nodeAfterInsertionPoint = signalTextNode;
+
+      const textAfterPlaceholder = parts[i];
+      if (textAfterPlaceholder.length > 0) {
+        const afterPartTextNode = document.createTextNode(textAfterPlaceholder);
+
+        parent.insertBefore(afterPartTextNode, nodeAfterInsertionPoint.nextSibling);
+
+        nodeAfterInsertionPoint = afterPartTextNode;
+      }
+    }
+  }
+
+  if (allNodesWithSignals && typeof allNodesWithSignals[Symbol.iterator] === 'function') {
+      allNodesWithSignals.forEach(el => {
+          processNode(el);
+      });
+  } else {
+      console.warn("initialiseSignal: 'allNodesWithSignals' is not a valid iterable.", allNodesWithSignals);
+  }
+
+
+  return signalValueNodes;
+}
+
+
+/**
+ * @type {null | (() => void)}
+ */
+let subscriber = null
+
+export function signal(val, markupName) {
+    const subscribers = new Set()
+    const elementsWithSignal = initialiseSignal(markupName, val)
+
+    return {
+        get value() {
+            if(subscriber) {
+                subscribers.add(subscriber)
+            }
+            return val
+        },
+        set(updated){
+            if(updated === val) return
+            val = updated
+            elementsWithSignal.forEach(el => el.textContent = updated)
+            subscribers.forEach(fn => fn())
+        },
+        update(fn) {
+            const newVal = fn(val)
+            if(newVal === val) return
+            val = newVal
+            elementsWithSignal.forEach(el => el.textContent = newVal)
+            subscribers.forEach(fn => fn())
+        }
+    }
+}
+
+export function effect(fn){
+    subscriber = fn
+    fn()
+    subscriber = null
+}
+
+export function derived(fn, markupName){
+    const derived = signal(undefined, markupName)
+    effect(() => {
+        derived.set(fn())
+    })
+    return derived
 }
