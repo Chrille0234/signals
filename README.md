@@ -1,22 +1,25 @@
-# How to Use
+### signal() example
+```javascript
+    const counter = signal(0, "counter") // this will create a counter signal, which will look for all nodes in the HTML document that contains '|counter|' and automatically render the changes to counter.
+    counter.set(5) // this will set the value of counter to 5, and render the new value.
+    counter.update(prev => ++prev) // same as counter.set, except you have access to the previous value.
+```
 
-Create a new instance of Signal
+### effect() example
+```javascript
+    const counter = signal(0)
 
-    let aSignal = new Signal(initial_value, variable_name);
+    effect(() => { // all signals used inside of effect() will automatically subscribe. The effect rerun everytime a signal used inside changes.
+        console.log(`counter doubled is: ${counter.value * 2}`)
+    )
+    
+```
 
-initial_value: The initial value for your signal.
-
-variable_name: The name of the variable you will use in your HTML, surrounded by pipes.
-
-Wrap the Signal in your HTML
-
-    <p>Signal value: |variable_name|</p>
-
-Replace variable_name with the name you provided when creating the Signal instance.
-
-Update the Value
-
-    aSignal.value = "new value";
-
-You can change the value at any time using the value property.
-Note: The type of the value (string, number...) cannot be changed once set.
+## derived() example
+```javascript
+    const counter = signal(0, "counter")
+    // derived is the exact same as effect, except it returns a value, and like signal(), you can give it a second argument. The second argument is explained in the signal() example.
+    // you dont necessarily need to assign it to anything. If you don't, it will still reflect the changes in the UI.
+    // it's basically as if effect() and signal() had a baby. 
+    const counterDoubled = derived(() => counter.value * 2, "doubled")
+```
