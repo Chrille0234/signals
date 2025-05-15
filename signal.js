@@ -18,35 +18,6 @@ let allNodesWithSignals = function(){
     return elements
 }()
 
-function splitAndKeepDelimiterInterleaved(str, delimiter) {
-    if (typeof str !== 'string' || typeof delimiter !== 'string' || delimiter === '') {
-      return []; // Handle invalid input
-    }
-  
-    const result = [];
-    let currentIndex = 0;
-    let delimiterIndex;
-  
-    while ((delimiterIndex = str.indexOf(delimiter, currentIndex)) !== -1) {
-      if (currentIndex < delimiterIndex) {
-        result.push(str.slice(currentIndex, delimiterIndex));
-      }
-      result.push(delimiter);
-      currentIndex = delimiterIndex + delimiter.length;
-    }
-  
-    if (currentIndex < str.length) {
-      result.push(str.slice(currentIndex));
-    }
-  
-    //Remove trailing delimiter if there is one.
-    if(result.length > 0 && result[result.length -1] === delimiter){
-        result.pop();
-    }
-  
-    return result;
-  }
-
 export class Signal {
     /** 
      * @template T
