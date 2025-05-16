@@ -38,7 +38,7 @@ export function initialiseSignal(value, markupName) {
 
   /**
    * 
-   * @param {Node} node 
+   * @param {Node | Text} node 
    * @returns {void}
    */
   function processNode(node) {
@@ -47,6 +47,7 @@ export function initialiseSignal(value, markupName) {
     }
 
     if (node.nodeType === Node.TEXT_NODE) {
+      // @ts-ignore
       handleTextNodeReplacement(node, placeholder, value, signalValueNodes);
     }
     else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -145,15 +146,15 @@ export function signal(value, markupName) {
         set(updated){
             if(updated === value) return
             value = updated
-            elementsWithSignal.forEach(el => el.textContent = updated)
+            elementsWithSignal.forEach(el => el.textContent = String(updated))
             subscribers.forEach(fn => fn())
         },
-        /** @param {() => T} fn */
+        /** @param {(prev: T) => T} fn */
         update(fn) {
             const newvalue = fn(value)
             if(newvalue === value) return
             value = newvalue
-            elementsWithSignal.forEach(el => el.textContent = newvalue)
+            elementsWithSignal.forEach(el => el.textContent = String(newvalue))
             subscribers.forEach(fn => fn())
         }
     }
