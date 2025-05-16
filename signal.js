@@ -1,4 +1,16 @@
+/**
+ * @template T
+ * @typedef {Object} Signal
+ * @property {T} value
+ * @property {(updated: T) => void} set
+ * @property {(fn: (prev: T) => T) => void} update
+ */
+
+
+
+/** @returns {Node[]} */
 let allNodesWithSignals = (function(){
+    /** @type {Node[]} */
     const elements = [];
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT, {
         acceptNode: function(node) {
@@ -12,11 +24,23 @@ let allNodesWithSignals = (function(){
     return elements;
 })();
 
-export function initialiseSignal(markupName, value) {
+/**
+ * @template T
+ * @param {T} value 
+ * @param {string} markupName 
+ * @returns {Node[]}
+ */
+export function initialiseSignal(value, markupName) {
+  /** @type {Node[]} */
   const signalValueNodes = [];
 
   const placeholder = `|${markupName}|`;
 
+  /**
+   * 
+   * @param {Node} node 
+   * @returns {void}
+   */
   function processNode(node) {
     if (!node) {
       return;
@@ -30,6 +54,14 @@ export function initialiseSignal(markupName, value) {
     }
   }
 
+  /**
+   * Replaces placeholders in a text node with signal nodes.
+   * @param {Text} textNode
+   * @param {string} placeholder
+   * @param {*} value
+   * @param {Node[]} collectedSignalNodes
+   * @returns {void}
+   */
   function handleTextNodeReplacement(textNode, placeholder, value, collectedSignalNodes) {
     if (!textNode.isConnected) {
       return;
@@ -88,46 +120,61 @@ export function initialiseSignal(markupName, value) {
 }
 
 
-/**
- * @type {null | (() => void)}
- */
+/** @type {null | (() => void)} */
 let subscriber = null
 
-export function signal(val, markupName) {
+/**
+ * @template T
+ * @param {T} value 
+ * @param {string} markupName 
+ * @returns {Signal<T>}
+ */
+export function signal(value, markupName) {
+    /** @type {Set<() => void>} */
     const subscribers = new Set()
-    const elementsWithSignal = initialiseSignal(markupName, val)
+    const elementsWithSignal = initialiseSignal(value, markupName)
 
     return {
         get value() {
             if(subscriber) {
                 subscribers.add(subscriber)
             }
-            return val
+            return value
         },
+        /** @param {T} updated */
         set(updated){
-            if(updated === val) return
-            val = updated
+            if(updated === value) return
+            value = updated
             elementsWithSignal.forEach(el => el.textContent = updated)
             subscribers.forEach(fn => fn())
         },
+        /** @param {() => T} fn */
         update(fn) {
-            const newVal = fn(val)
-            if(newVal === val) return
-            val = newVal
-            elementsWithSignal.forEach(el => el.textContent = newVal)
+            const newvalue = fn(value)
+            if(newvalue === value) return
+            value = newvalue
+            elementsWithSignal.forEach(el => el.textContent = newvalue)
             subscribers.forEach(fn => fn())
         }
     }
 }
 
+/** @param {() => void} fn */
 export function effect(fn){
     subscriber = fn
     fn()
     subscriber = null
 }
 
+/**
+ * @template T
+ * @param {() => T} fn 
+ * @param {string} markupName 
+ * @returns {Signal<T>}
+ */
 export function derived(fn, markupName){
-    const derived = signal(undefined, markupName)
+    /** @type {Signal<T>} */
+    const derived = signal(fn(), markupName)
     effect(() => {
         derived.set(fn())
     })
