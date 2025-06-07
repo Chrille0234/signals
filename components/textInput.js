@@ -48,7 +48,7 @@ export class TextInputComponent extends HTMLElement {
       
       <h3>Text Input with Derived Values</h3>
       <div>
-        <input type="text" id="textInput" placeholder="Type something..." value="{{inputText}}">
+        <input type="text" id="textInput" placeholder="Type something...">
         <button id="clearText">Clear</button>
       </div>
       
