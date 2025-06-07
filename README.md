@@ -23,11 +23,3 @@
     // it's basically as if effect() and signal() had a baby. 
     const counterDoubled = derived(() => counter.value * 2, "doubled")
 ```
-
-## plans
-* support for proper templating. .map, .filter, etc.
-* support for displaying objects in the UI in the first place. 
-
-
-## warnings
-You cannot display objects in the HTML. This means that you can't write something like |product.title|. If you want to do that, you should first create a derived signal like: ```const title = derived(() => product.value.title, "title")```, and then put |title| in your HTML. This will hopefully be fixed in the future. 
