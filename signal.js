@@ -116,6 +116,23 @@ export function signal(value, markupName, root) {
     return createSignalProxy(obj)
 }
 
+/**
+ * @template T
+ * @param {Signal<T>} signal 
+ * @param {{name: string, properties: Array<keyof T>}} config 
+ * @param {Node} [body] 
+ */
+export function bindSignalProperties(signal, config, body){
+  config.properties.forEach(property => {
+    derived(() => {
+      const value = signal[property]
+      if(!value) return ""
+
+      return value
+    }, `${config.name}.${property}`, body)
+  })
+}
+
 /** @param {() => void} fn */
 export function effect(fn){
     subscriber = fn
@@ -139,19 +156,22 @@ export function derived(fn, markupName, root){
     return derived
 }
 
+/**
+ * @template T 
+ * @param {{fn: () => T, defaultValue: T}} param0 
+ * @returns {{isLoading: Signal<boolean>, result: signal<T>}}
+ */
 export function resource({fn, defaultValue}){
-  const value = signal({
-    res: defaultValue,
-    isLoading: true
-  })
+  const value = signal(defaultValue)
+  const isLoading = signal(false)
 
   effect(() => {
-    value.update(prev => ({...prev, isLoading: true}))
+    isLoading.update(prev => ({...prev, isLoading: true}))
     fn()
       .then(res => {
-        value.set({res, isLoading: false})
+        value.set(res)
       })
   })
 
-  return value
+  return {isLoading, result: value}
 }

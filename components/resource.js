@@ -1,4 +1,4 @@
-import { derived, resource, signal } from "../signal.js";
+import { bindSignalProperties, resource, signal } from "../signal.js";
 
 export class ProductBrowserComponent extends HTMLElement {
     constructor() {
@@ -77,7 +77,8 @@ export class ProductBrowserComponent extends HTMLElement {
                 <h3>Brows products</h3>
                 <div class="product-info">
                     <div class="product-id">Product ID: {{product_id}}</div>
-                    <div class="product-title">{{title}}</div>
+                    <div class="product-title">{{product.title}}</div>
+                    <div class="product-title">{{product.price}}</div>
                 </div>
                 
                 <div class="controls">
@@ -95,9 +96,15 @@ export class ProductBrowserComponent extends HTMLElement {
         this.productId = signal(1, "product_id", this.shadow)
         this.product = resource({
             fn: async () => getProductById(this.productId),
-            defaultValue: {title: "Loading..."}
+            defaultValue: {
+                title: "Loading...",
+                price: 0.00,
+            }
         })
-        derived(() => this.product.res.title, "title", this.shadow)
+        bindSignalProperties(this.product.result, {
+            name: "product",
+            properties: ["title", "price"]
+        }, this.shadow)
     }
     
     connectedCallback(){
