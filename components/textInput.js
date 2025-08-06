@@ -61,9 +61,9 @@ export class TextInputComponent extends HTMLElement {
 
     // Create signals scoped to this component
     this.inputText = signal("", "inputText", this.shadow);
-    this.textLength = derived(() => this.inputText.value.length, "textLength", this.shadow);
+    this.textLength = derived(() => this.inputText.length, "textLength", this.shadow);
     this.wordCount = derived(() => {
-      const text = this.inputText.value.trim();
+      const text = this.inputText.trim();
       return text === "" ? 0 : text.split(/\s+/).length;
     }, "wordCount", this.shadow);
   }

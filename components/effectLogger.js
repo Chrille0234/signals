@@ -66,11 +66,11 @@ export class EffectLoggerComponent extends HTMLElement {
     // Set up effect to log changes
     effect(() => {
       const log = this.shadow.getElementById("effectLog");
-      if (log && this.randomValue.value !== 0) {
+      if (log && this.randomValue !== 0) {
         const timestamp = new Date().toLocaleTimeString();
         const entry = document.createElement("div");
         entry.className = "log-entry";
-        entry.textContent = `[${timestamp}] Value changed to: ${this.randomValue.value}`;
+        entry.textContent = `[${timestamp}] Value changed to: ${this.randomValue}`;
         log.appendChild(entry);
         log.scrollTop = log.scrollHeight;
       }

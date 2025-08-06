@@ -1,26 +1,26 @@
 /**
  * @template T
- * @typedef {Object} Signal
- * @property {T} value
- * @property {(updated: T) => void} set
- * @property {(fn: (prev: T) => T) => void} update
+ * @typedef {T & {
+ *   value: T,
+ *   set: (updated: T) => void,
+ *   update: (fn: (prev: T) => T) => void
+ * }} Signal
  */
 
-/** @type {Node[]} */
-let allNodesWithSignals = (function(){
-    /** @type {Node[]} */
-    const elements = [];
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT, {
-        acceptNode: function(node) {
-            if (node.textContent?.match(/\{\{([^\s|]+)\}\}/g)) {
-                return NodeFilter.FILTER_ACCEPT;
+
+function createSignalProxy(signalObj) {
+    return new Proxy(signalObj, {
+        get(target, prop) {
+            if (prop === Symbol.toPrimitive || prop === 'valueOf' || prop === 'toString') {
+                return () => target.value;
             }
-            return NodeFilter.FILTER_REJECT;
+            if (prop === 'set' || prop === 'update' || prop === 'value') {
+                return target[prop];
+            }
+            return target.value[prop];
         }
     });
-    while(walker.nextNode()) elements.push(walker.currentNode);
-    return elements;
-})();
+}
 
 /**
  * @template T
@@ -89,7 +89,7 @@ export function signal(value, markupName, root) {
     const subscribers = new Set()
     const elementsWithSignal = initialiseSignal(value, markupName, root)
 
-    return {
+    const obj = {
         get value() {
             if(subscriber) {
                 subscribers.add(subscriber)
@@ -112,6 +112,8 @@ export function signal(value, markupName, root) {
             subscribers.forEach(fn => fn())
         }
     }
+
+    return createSignalProxy(obj)
 }
 
 /** @param {() => void} fn */
@@ -135,4 +137,21 @@ export function derived(fn, markupName, root){
         derived.set(fn())
     })
     return derived
+}
+
+export function resource({fn, defaultValue}){
+  const value = signal({
+    res: defaultValue,
+    isLoading: true
+  })
+
+  effect(() => {
+    value.update(prev => ({...prev, isLoading: true}))
+    fn()
+      .then(res => {
+        value.set({res, isLoading: false})
+      })
+  })
+
+  return value
 }

@@ -60,9 +60,9 @@ export class CounterComponent extends HTMLElement {
 
     // Create signals scoped to this component
     this.count = signal(0, "count", this.shadow);
-    this.doubled = derived(() => this.count.value * 2, "doubled", this.shadow);
-    this.squared = derived(() => this.count.value ** 2, "squared", this.shadow);
-    this.isEven = derived(() => this.count.value % 2 === 0 ? "Yes" : "No", "isEven", this.shadow);
+    this.doubled = derived(() => this.count * 2, "doubled", this.shadow);
+    this.squared = derived(() => this.count ** 2, "squared", this.shadow);
+    this.isEven = derived(() => this.count % 2 === 0 ? "Yes" : "No", "isEven", this.shadow);
   }
 
   connectedCallback() {

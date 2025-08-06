@@ -1,6 +1,7 @@
 import "./components/counter.js";
 import "./components/textInput.js";
 import "./components/effectLogger.js";
+import "./components/resource.js";
 
 class SignalDemo extends HTMLElement {
   constructor() {
@@ -51,6 +52,7 @@ class SignalDemo extends HTMLElement {
       </div>
       
       <div class="components">
+        <product-browser></product-browser>
         <signal-counter></signal-counter>
         <signal-text-input></signal-text-input>
         <signal-effect-logger></signal-effect-logger>
