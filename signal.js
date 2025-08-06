@@ -117,6 +117,7 @@ export function signal(value, markupName, root) {
 }
 
 /**
+ * This function creates a derived signal from each specified property on a given signal, to be displayed in the DOM.
  * @template T
  * @param {Signal<T>} signal 
  * @param {{name: string, properties: Array<keyof T>}} config 
@@ -157,21 +158,31 @@ export function derived(fn, markupName, root){
 }
 
 /**
- * @template T 
- * @param {{fn: () => T, defaultValue: T}} param0 
- * @returns {{isLoading: Signal<boolean>, result: signal<T>}}
+ * @template {Record<string, any>} T
+ * @param {{fn: () => Promise<T>, defaultValue: T, options: {name: string, bindToDom: boolean, root: Node}}} resource
+ * @returns {{isLoading: Signal<boolean>, result: Signal<T>}}
  */
-export function resource({fn, defaultValue}){
-  const value = signal(defaultValue)
+export function resource({fn, defaultValue, options}){
+  const { name, bindToDom = false, root } = options;
+  
+  const value = signal(defaultValue, name, root)
   const isLoading = signal(false)
 
   effect(() => {
-    isLoading.update(prev => ({...prev, isLoading: true}))
+    isLoading.set(true)
     fn()
       .then(res => {
-        value.set(res)
+        value.update(prev => ({...prev, ...res}))
+        isLoading.set(false)
       })
   })
+
+  if(bindToDom && name){
+    bindSignalProperties(value, {
+      name: name,
+      properties: Object.keys(defaultValue)
+    }, root)
+  }
 
   return {isLoading, result: value}
 }

@@ -1,4 +1,4 @@
-import { bindSignalProperties, resource, signal } from "../signal.js";
+import { bindSignalProperties, effect, resource, signal } from "../signal.js";
 
 export class ProductBrowserComponent extends HTMLElement {
     constructor() {
@@ -99,12 +99,13 @@ export class ProductBrowserComponent extends HTMLElement {
             defaultValue: {
                 title: "Loading...",
                 price: 0.00,
+            },
+            options: {
+                bindToDom: true,
+                root: this.shadow,
+                name: "product"
             }
         })
-        bindSignalProperties(this.product.result, {
-            name: "product",
-            properties: ["title", "price"]
-        }, this.shadow)
     }
     
     connectedCallback(){
